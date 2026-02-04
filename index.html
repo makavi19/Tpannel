@@ -7,289 +7,229 @@
 <style>
 
 body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:#ffffff;
-    color:#000000;
-}
-
-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:15px 25px;
-    border-bottom:2px solid #ddd;
+  font-family: Arial, sans-serif;
+  background:white;
+  color:black;
+  margin:0;
+  padding:20px;
 }
 
 h1{
-    margin:0;
-    color:#b8860b;
-}
-
-#timer{
-    font-weight:bold;
-    font-size:16px;
-}
-
-.price{
-    text-align:center;
-    font-size:22px;
-    margin:15px 0;
-    color:#006400;
+  text-align:center;
 }
 
 .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-    gap:15px;
-    padding:20px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+  margin-top:20px;
 }
 
-.card{
-    background:#f9f9f9;
-    border:1px solid #ccc;
-    border-radius:8px;
-    padding:12px;
-    min-height:280px;
-    overflow:auto;
+.box{
+  border:1px solid #000;
+  padding:15px;
+  min-height:200px;
 }
 
-.card h2{
-    text-align:center;
+.box h2{
+  margin-top:0;
+  font-size:18px;
+  border-bottom:1px solid #000;
+  padding-bottom:5px;
 }
 
-.item{
-    border-bottom:1px solid #ddd;
-    padding:8px 0;
-}
-
-.item a{
-    color:#0056b3;
-    text-decoration:none;
-}
-
-.item a:hover{
-    text-decoration:underline;
-}
-
-footer{
-    text-align:center;
-    padding:15px;
-    color:#555;
-    font-size:14px;
+.timer{
+  float:right;
+  font-size:12px;
+  color:gray;
 }
 
 </style>
 </head>
 
+
 <body>
 
-<header>
-<h1>🟡 Gold Trading Live Dashboard</h1>
-<div id="timer">Refresh in: 60s</div>
-</header>
+<h1>Gold Trading Live Dashboard</h1>
 
-<div class="price" id="goldPrice">Loading Gold Price...</div>
 
 <div class="grid">
 
-<div class="card" id="economic">
-<h2>📊 Economic News</h2>
-<div class="content"></div>
-</div>
+  <!-- GOLD -->
+  <div class="box">
+    <h2>Gold Price <span id="goldTimer" class="timer"></span></h2>
+    <div id="goldPrice">Loading...</div>
+  </div>
 
-<div class="card" id="central">
-<h2>🏦 Central Banks</h2>
-<div class="content"></div>
-</div>
 
-<div class="card" id="usd">
-<h2>💵 US Dollar</h2>
-<div class="content"></div>
-</div>
+  <!-- NEWS -->
+  <div class="box">
+    <h2>Gold News <span id="newsTimer" class="timer"></span></h2>
+    <div id="newsBox">Loading...</div>
+  </div>
 
-<div class="card" id="geo">
-<h2>🌍 Geopolitics</h2>
-<div class="content"></div>
-</div>
 
-<div class="card" id="sentiment">
-<h2>📉 Market Sentiment</h2>
-<div class="content"></div>
-</div>
-
-<div class="card" id="commodities">
-<h2>🛢️ Commodities</h2>
-<div class="content"></div>
-</div>
-
-<div class="card" id="technical">
-<h2>📈 Technical Analysis</h2>
-<div class="content"></div>
-</div>
-
-<div class="card" id="calendar">
-<h2>🕐 Economic Calendar</h2>
-<div class="content"></div>
-</div>
+  <!-- CALENDAR -->
+  <div class="box">
+    <h2>Economic Calendar <span id="calTimer" class="timer"></span></h2>
+    <div id="calendarBox">Loading...</div>
+  </div>
 
 </div>
 
-<footer>
-Auto refresh every 1 minute | Powered by Cloudflare
-</footer>
+
 
 <script>
 
-// ================= WORKER URL =================
+const BASE = "https://gold-proxy.abhi-koiri.workers.dev";
 
-const WORKER = "https://gold-proxy.abhi-koiri.workers.dev";
 
-// ================= TIMER =================
+// ================= TIMERS =================
+let goldSec = 60;
+let newsSec = 600;
+let calSec  = 21600;
 
-let seconds = 60;
 
-function startTimer(){
+function startTimers(){
 
-    setInterval(()=>{
+  setInterval(()=>{
 
-        seconds--;
+    goldSec--;
+    newsSec--;
+    calSec--;
 
-        document.getElementById("timer").innerText =
-        "Refresh in: " + seconds + "s";
+    if(goldSec<=0) goldSec=60;
+    if(newsSec<=0) newsSec=600;
+    if(calSec<=0)  calSec=21600;
 
-        if(seconds <= 0){
-            seconds = 60;
-            loadAll();
-        }
+    document.getElementById("goldTimer").innerText =
+      "Refresh in " + goldSec + "s";
 
-    },1000);
+    document.getElementById("newsTimer").innerText =
+      "Refresh in " + newsSec + "s";
 
+    document.getElementById("calTimer").innerText =
+      "Refresh in " + calSec + "s";
+
+  },1000);
 }
 
-// ================= NEWS =================
 
-async function loadNews(query,id){
-
-let url = `${WORKER}/news?q=${query}`;
-
-let box = document.querySelector(`#${id} .content`);
-
-try{
-
-let res = await fetch(url);
-let data = await res.json();
-
-box.innerHTML="";
-
-data.articles.slice(0,5).forEach(n=>{
-
-let div=document.createElement("div");
-div.className="item";
-
-div.innerHTML=`
-<b>${n.title}</b><br>
-<a href="${n.url}" target="_blank">Read</a>
-`;
-
-box.appendChild(div);
-
-});
-
-}catch{
-
-box.innerHTML="Failed to load";
-
-}
-
-}
 
 // ================= GOLD =================
-
 async function loadGold(){
 
-let url = `${WORKER}/gold`;
+  try{
 
-try{
+    const r = await fetch(`${BASE}/gold`);
+    const d = await r.json();
 
-let res = await fetch(url);
-let data = await res.json();
+    const price =
+      d.chart.result[0].meta.regularMarketPrice;
 
-let price =
-data["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
+    document.getElementById("goldPrice").innerHTML =
+      `<b>$${price}</b>`;
 
-document.getElementById("goldPrice").innerHTML =
-"Live Gold Price (XAU/USD): $" + Number(price).toFixed(2);
+  }catch{
 
-}catch{
-
-document.getElementById("goldPrice").innerHTML =
-"Gold price unavailable";
-
+    document.getElementById("goldPrice").innerText =
+      "Gold unavailable";
+  }
 }
 
+
+
+// ================= NEWS =================
+async function loadNews(){
+
+  try{
+
+    const r = await fetch(`${BASE}/news?q=gold economy inflation fed rates`);
+    const d = await r.json();
+
+    const box = document.getElementById("newsBox");
+
+    box.innerHTML="";
+
+    d.articles.slice(0,6).forEach(n=>{
+
+      box.innerHTML+=`
+        <div>
+          <b>${n.title}</b><br>
+          <small>${n.source.name}</small>
+        </div>
+        <hr>
+      `;
+    });
+
+  }catch{
+
+    document.getElementById("newsBox").innerText =
+      "News unavailable";
+  }
 }
+
+
 
 // ================= CALENDAR =================
-
 async function loadCalendar(){
 
-let url = `${WORKER}/calendar`;
+  try{
 
-let box=document.querySelector("#calendar .content");
+    const r = await fetch(`${BASE}/calendar`);
+    const d = await r.json();
 
-try{
+    const box = document.getElementById("calendarBox");
 
-let res = await fetch(url);
-let data = await res.json();
+    box.innerHTML="";
 
-box.innerHTML="";
+    d.slice(0,6).forEach(ev=>{
 
-data.economicCalendar.slice(0,5).forEach(e=>{
+      box.innerHTML+=`
+        <div>
+          <b>${ev.country}</b> - ${ev.event}<br>
+          Impact: ${ev.impact}
+        </div>
+        <hr>
+      `;
+    });
 
-let div=document.createElement("div");
-div.className="item";
+  }catch{
 
-div.innerHTML=`
-<b>${e.event}</b><br>
-${e.country} | ${e.time}
-`;
-
-box.appendChild(div);
-
-});
-
-}catch{
-
-box.innerHTML="Calendar unavailable";
-
+    document.getElementById("calendarBox").innerText =
+      "Calendar unavailable";
+  }
 }
 
-}
+
 
 // ================= LOAD ALL =================
-
 function loadAll(){
 
-loadNews("US inflation CPI GDP economy","economic");
-loadNews("Federal Reserve ECB interest rate","central");
-loadNews("US dollar DXY forex","usd");
-loadNews("war conflict geopolitics","geo");
-loadNews("stock market crash volatility VIX","sentiment");
-loadNews("gold oil commodity prices","commodities");
-loadNews("gold technical analysis support resistance","technical");
-
-loadGold();
-loadCalendar();
-
+  loadGold();
+  loadNews();
+  loadCalendar();
 }
 
-// ================= START =================
 
+
+// ================= START =================
 loadAll();
-startTimer();
+startTimers();
+
+
+// Gold every 1 min
+setInterval(loadGold,60000);
+
+// News every 10 min
+setInterval(loadNews,600000);
+
+// Calendar every 6 hours
+setInterval(loadCalendar,21600000);
+
 
 </script>
+
 
 </body>
 </html>
