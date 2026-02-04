@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -56,7 +56,6 @@ h1{
 
 .card h2{
     text-align:center;
-    color:#000;
 }
 
 .item{
@@ -137,16 +136,14 @@ footer{
 </div>
 
 <footer>
-Auto refresh every 1 minute | Personal Trading Dashboard
+Auto refresh every 1 minute | Powered by Cloudflare
 </footer>
 
 <script>
 
-// ================= API KEYS =================
+// ================= WORKER URL =================
 
-const NEWS_API="93790c8b181f4c8d8438d65ac39622e4";
-const ALPHA_API="G4LURW2PWI59QW9J";
-const FINNHUB_API="d61cc81r01quq5pfpoq0d61cc81r01quq5pfpoqg";
+const WORKER = "https://gold-proxy.abhi-koiri.workers.dev";
 
 // ================= TIMER =================
 
@@ -154,16 +151,15 @@ let seconds = 60;
 
 function startTimer(){
 
-    const timer=document.getElementById("timer");
-
     setInterval(()=>{
 
         seconds--;
 
-        timer.innerText="Refresh in: "+seconds+"s";
+        document.getElementById("timer").innerText =
+        "Refresh in: " + seconds + "s";
 
-        if(seconds<=0){
-            seconds=60;
+        if(seconds <= 0){
+            seconds = 60;
             loadAll();
         }
 
@@ -175,14 +171,14 @@ function startTimer(){
 
 async function loadNews(query,id){
 
-let url=`https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&language=en&apiKey=${NEWS_API}`;
+let url = `${WORKER}/news?q=${query}`;
 
-let box=document.querySelector(`#${id} .content`);
+let box = document.querySelector(`#${id} .content`);
 
 try{
 
-let res=await fetch(url);
-let data=await res.json();
+let res = await fetch(url);
+let data = await res.json();
 
 box.innerHTML="";
 
@@ -202,7 +198,7 @@ box.appendChild(div);
 
 }catch{
 
-box.innerHTML="Failed to load data";
+box.innerHTML="Failed to load";
 
 }
 
@@ -212,21 +208,23 @@ box.innerHTML="Failed to load data";
 
 async function loadGold(){
 
-let url=`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAU&to_currency=USD&apikey=${ALPHA_API}`;
+let url = `${WORKER}/gold`;
 
 try{
 
-let res=await fetch(url);
-let data=await res.json();
+let res = await fetch(url);
+let data = await res.json();
 
-let price=data["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
+let price =
+data["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
 
-document.getElementById("goldPrice").innerHTML=
-"Live Gold Price (XAU/USD): $"+Number(price).toFixed(2);
+document.getElementById("goldPrice").innerHTML =
+"Live Gold Price (XAU/USD): $" + Number(price).toFixed(2);
 
 }catch{
 
-document.getElementById("goldPrice").innerHTML="Gold price unavailable";
+document.getElementById("goldPrice").innerHTML =
+"Gold price unavailable";
 
 }
 
@@ -236,14 +234,14 @@ document.getElementById("goldPrice").innerHTML="Gold price unavailable";
 
 async function loadCalendar(){
 
-let url=`https://finnhub.io/api/v1/calendar/economic?token=${FINNHUB_API}`;
+let url = `${WORKER}/calendar`;
 
 let box=document.querySelector("#calendar .content");
 
 try{
 
-let res=await fetch(url);
-let data=await res.json();
+let res = await fetch(url);
+let data = await res.json();
 
 box.innerHTML="";
 
