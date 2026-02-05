@@ -10,36 +10,47 @@ body{
   margin:0;
   padding:20px;
   font-family:Arial, sans-serif;
-  background:white;
-  color:black;
+  background:#fff;
+  color:#000;
 }
 
 h1{
   text-align:center;
+  margin-bottom:20px;
 }
 
 /* GRID */
 
-.grid{
+.dashboard{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:repeat(3,1fr);
   gap:15px;
-  margin-top:20px;
 }
 
 /* BOX */
 
 .box{
-  border:1px solid black;
-  padding:15px;
+  border:1px solid #000;
+  padding:12px;
   border-radius:6px;
-  min-height:180px;
+  min-height:200px;
+  background:#fff;
 }
 
-.highlight{
+.box h3{
+  margin-top:0;
+  border-bottom:1px solid #000;
+  padding-bottom:5px;
+}
+
+/* GOLD IMPACT BOX */
+
+.impact{
   border:3px solid gold;
   background:#fffbe6;
 }
+
+/* TIMER */
 
 .timer{
   float:right;
@@ -47,13 +58,24 @@ h1{
   color:#555;
 }
 
+/* LIST */
+
 ul{
   padding-left:18px;
 }
 
 li{
-  font-size:14px;
+  font-size:13px;
   margin-bottom:6px;
+}
+
+a{
+  color:black;
+  text-decoration:none;
+}
+
+a:hover{
+  text-decoration:underline;
 }
 
 </style>
@@ -64,42 +86,70 @@ li{
 
 <h1>Gold Trading Live Dashboard</h1>
 
-<div class="grid">
+<div class="dashboard">
 
-<!-- GOLD -->
+<!-- 1 ECONOMY -->
 <div class="box">
-<h3>Gold Price <span id="timer" class="timer"></span></h3>
-<h2 id="gold">Loading...</h2>
+<h3>Economic News</h3>
+<ul id="eco"></ul>
 </div>
 
-<!-- GOLD IMPACT -->
-<div class="box highlight">
+<!-- 2 CENTRAL BANK -->
+<div class="box">
+<h3>Central Banks</h3>
+<ul id="cb"></ul>
+</div>
+
+<!-- 3 USD -->
+<div class="box">
+<h3>US Dollar</h3>
+<ul id="usd"></ul>
+</div>
+
+<!-- 4 GEOPOLITICS -->
+<div class="box">
+<h3>Geopolitics</h3>
+<ul id="geo"></ul>
+</div>
+
+<!-- 5 SENTIMENT -->
+<div class="box">
+<h3>Market Sentiment</h3>
+<ul id="sentiment"></ul>
+</div>
+
+<!-- 6 COMMODITIES -->
+<div class="box">
+<h3>Commodities</h3>
+<ul id="com"></ul>
+</div>
+
+<!-- 7 GOLD -->
+<div class="box">
+<h3>Gold Price <span id="goldTimer" class="timer"></span></h3>
+<h2 id="goldPrice">Loading...</h2>
+</div>
+
+<!-- 8 CALENDAR -->
+<div class="box">
+<h3>Economic Calendar</h3>
+<ul id="calendar"></ul>
+</div>
+
+<!-- 9 GOLD IMPACT -->
+<div class="box impact">
 <h3>🔥 Gold Impact News</h3>
-<ul id="impact">Loading...</ul>
-</div>
-
-<!-- MARKET NEWS -->
-<div class="box">
-<h3>Market News</h3>
-<ul id="news">Loading...</ul>
-</div>
-
-<!-- STATUS -->
-<div class="box">
-<h3>System Status</h3>
-<p id="status">Running</p>
-<p>Optimized Refresh</p>
+<ul id="impact"></ul>
 </div>
 
 </div>
-
 
 
 <script>
 
 const BASE = "https://gold-proxy.abhi-koiri.workers.dev";
 
-let time = 60;
+let goldTime = 60;
 
 
 /* ================= GOLD ================= */
@@ -114,35 +164,32 @@ async function loadGold(){
   const p =
    d.chart.result[0].meta.regularMarketPrice;
 
-  document.getElementById("gold").innerText =
+  document.getElementById("goldPrice").innerText =
    "$ " + p;
 
  }catch{
 
-  document.getElementById("gold").innerText =
+  document.getElementById("goldPrice").innerText =
    "Unavailable";
  }
 }
 
 
-/* ================= TIMER ================= */
-
 setInterval(()=>{
 
- time--;
+ goldTime--;
 
- if(time<=0){
-  time=60;
+ if(goldTime<=0){
+  goldTime=60;
   loadGold();
  }
 
- document.getElementById("timer").innerText =
-  time+"s";
+ document.getElementById("goldTimer").innerText =
+  goldTime+"s";
 
 },1000);
 
 loadGold();
-
 
 
 /* ================= NEWS ================= */
@@ -152,69 +199,106 @@ async function loadNews(){
  try{
 
   const r = await fetch(
-   BASE + "/news?q=gold economy inflation fed dollar rates"
+   BASE+"/news?q=gold economy fed inflation dollar war oil rates market"
   );
-
-  if(!r.ok) throw "API Error";
 
   const d = await r.json();
 
-  if(!d.articles || d.articles.length===0)
-   throw "No News";
+  let eco="",cb="",usd="",geo="",sen="",com="",imp="";
 
-  let impact="", normal="";
 
-  d.articles.slice(0,12).forEach(n=>{
+  d.articles.slice(0,25).forEach(n=>{
 
    const t = n.title.toLowerCase();
 
    const li = `
-    <li>
-     <a href="${n.url}" target="_blank">
-      ${n.title}
-     </a>
-    </li>`;
+   <li>
+    <a href="${n.url}" target="_blank">
+     ${n.title}
+    </a>
+   </li>`;
 
+
+   // ECONOMY
+   if(t.includes("economy")||t.includes("gdp")||t.includes("recession"))
+    eco+=li;
+
+   // CENTRAL BANK
+   if(t.includes("fed")||t.includes("central")||t.includes("rate"))
+    cb+=li;
+
+   // USD
+   if(t.includes("dollar")||t.includes("usd")||t.includes("currency"))
+    usd+=li;
+
+   // GEOPOLITICS
+   if(t.includes("war")||t.includes("china")||t.includes("russia"))
+    geo+=li;
+
+   // SENTIMENT
+   if(t.includes("market")||t.includes("stocks")||t.includes("selloff"))
+    sen+=li;
+
+   // COMMODITIES
+   if(t.includes("oil")||t.includes("silver")||t.includes("commodity"))
+    com+=li;
+
+   // GOLD IMPACT
    if(
-    t.includes("gold") ||
-    t.includes("fed") ||
-    t.includes("inflation") ||
-    t.includes("rate") ||
-    t.includes("dollar")
-   ){
-    impact += li;
-   }else{
-    normal += li;
-   }
+    t.includes("gold")||
+    t.includes("fed")||
+    t.includes("inflation")||
+    t.includes("rate")||
+    t.includes("dollar")||
+    t.includes("crisis")
+   )
+    imp+=li;
 
   });
 
-  document.getElementById("impact").innerHTML =
-   impact || "<li>No strong signals</li>";
 
-  document.getElementById("news").innerHTML =
-   normal || "<li>No updates</li>";
+  // Fallbacks
 
-  document.getElementById("status").innerText =
-   "Running";
+  eco = eco || "<li>No major economic news</li>";
+  cb  = cb  || "<li>No central bank updates</li>";
+  usd = usd || "<li>No USD movement news</li>";
+  geo = geo || "<li>No geopolitical tension</li>";
+  sen = sen || "<li>Market neutral</li>";
+  com = com || "<li>No commodity updates</li>";
+  imp = imp || "<li>No strong gold signals</li>";
 
- }catch(e){
 
-  document.getElementById("impact").innerHTML =
-   "<li>News temporarily unavailable</li>";
+  document.getElementById("eco").innerHTML = eco;
+  document.getElementById("cb").innerHTML = cb;
+  document.getElementById("usd").innerHTML = usd;
+  document.getElementById("geo").innerHTML = geo;
+  document.getElementById("sentiment").innerHTML = sen;
+  document.getElementById("com").innerHTML = com;
+  document.getElementById("impact").innerHTML = imp;
 
-  document.getElementById("news").innerHTML =
-   "<li>Please try later</li>";
 
-  document.getElementById("status").innerText =
-   "News API issue";
+ }catch{
+
+  document
+   .querySelectorAll("ul")
+   .forEach(u=>u.innerHTML="<li>Unavailable</li>");
  }
 }
+
 
 loadNews();
 setInterval(loadNews,600000); // 10 min
 
 
+/* ================= CALENDAR (PLACEHOLDER) ================= */
+
+function loadCalendar(){
+
+ document.getElementById("calendar").innerHTML =
+  "<li>Calendar API pending</li>";
+}
+
+loadCalendar();
 
 </script>
 
